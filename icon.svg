@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">Prime Scout logo</title>
+  <desc id="desc">Navy and blue Prime Scout wordmark with a compass-inspired P symbol.</desc>
+  <rect width="1200" height="420" fill="#ffffff"/>
+  <g transform="translate(55 65)">
+    <!-- Compass-inspired emblem -->
+    <path d="M35 38 H220 C286 38 324 78 324 143 V167 C324 232 286 272 220 272 H174 V218 H218 C251 218 269 199 269 167 V143 C269 111 251 92 218 92 H35 Z" fill="#08264D"/>
+    <path d="M72 178 L228 121 L169 253 L145 196 Z" fill="#0866F5"/>
+    <path d="M72 178 L145 196 L169 253" fill="none" stroke="#0866F5" stroke-width="3" stroke-linejoin="round"/>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" font-weight="800">
+    <text x="405" y="205" font-size="132" letter-spacing="-4" fill="#08264D">Prime</text>
+    <text x="400" y="330" font-size="132" letter-spacing="-2" fill="#0866F5">Scout</text>
+  </g>
+</svg>
