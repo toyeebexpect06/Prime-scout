@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#00743d">
+<meta name="description" content="Scout store owners with rotating message bodies, multiple sending accounts, address checking and no repeat sends.">
+<title>ameenis-solution Scout — Accounts</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="accounts" data-static>
+<header>
+  <img class="logo" src="logo-mark.png" alt="ameenis-solution Scout logo" width="40" height="40">
+  <div><h1>ameenis-solution</h1><small>Scout</small></div>
+  <span class="ready">● System ready</span><button class="btn" id="inst">Install app</button>
+</header>
+<nav id="nav"></nav>
+<main>
+<div class="eyebrow">Operational workspace</div>
+<h2>Accounts</h2>
+<p class="sub">Manage the next move without losing track of anyone.</p>
+<div id="stats"></div>
+
+<section class="card">
+  <b class="ct"><svg class="ic" viewBox="0 0 24 24" style="color:var(--brand);vertical-align:-4px;margin-right:8px"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Your sending accounts</b>
+  <p class="sub" style="margin:8px 0 14px">Add every Gmail address you send from. Sends are shared out evenly between the accounts that are switched on.</p>
+  <div class="note">On a phone, sending opens the Gmail app with the message ready. Gmail composes from the account it is currently on, so if the wrong address shows in the From line, tap it and pick the one the app named for that send.</div>
+  <div class="note">
+    <b style="font-size:12px;letter-spacing:.06em">SEND BUTTON OPENS</b>
+    <div class="row" style="gap:8px;margin:10px 0">
+      <button class="ob" data-act="setOpen" data-v="app" style="flex:0 0 auto">Gmail app</button>
+      <button class="ob" data-act="setOpen" data-v="go" style="flex:0 0 auto">Gmail Go</button>
+      <button class="ob" data-act="setOpen" data-v="browser" style="flex:0 0 auto">Gmail in browser</button>
+    </div>
+    <span>Your choice is remembered. Gmail Go loads faster on some phones; the browser version can target the exact account named for each send.</span>
+  </div>
+  <div class="row" style="flex-wrap:nowrap">
+    <input id="a-email" type="email" placeholder="you@gmail.com" style="min-width:0">
+    <button class="btn p" data-act="addAcc" style="padding:14px 18px;flex:0 0 auto">＋ Add</button>
+  </div>
+</section>
+
+<section class="card">
+  <b class="ct">Accounts (<span id="acc-count">0</span>)</b>
+  <div id="acc-list"></div>
+</section>
+
+<section class="card">
+  <b class="ct">Backup account</b>
+  <p class="sub" style="margin:8px 0 14px">If the account whose turn it is has been switched off, the app sends from this one instead, so the run never stops.</p>
+  <div id="bk-box"></div>
+</section>
+</main>
+<div id="toast"></div>
+<script src="app.js" defer></script>
+<script src="accounts.js" defer></script>
+</body>
+</html>

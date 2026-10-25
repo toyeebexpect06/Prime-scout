@@ -1,4 +1,4 @@
-# Prime Scout
+# ameenis-solution Scout
 
 Rotating outreach manager. Plain HTML, CSS and JavaScript, no build step and no backend.
 
@@ -11,7 +11,7 @@ Open `index.html` in a browser (the tabs link to the other pages), or serve the 
 - index.html (Messages), accounts.html, batches.html, recipients.html, rotation.html, activity.html: one page per section, all sharing the same header and tab bar
 - styles.css: all styling, light and dark mode
 - app.js: all logic (messages, accounts, batches, recipients, rotation, activity)
-- manifest.webmanifest, sw.js, icon.svg: installable app and offline support
+- manifest.webmanifest, sw.js, logo-mark.png, icon-192.png, icon-512.png: installable app and offline support
 
 ## Data
 Everything is stored in the browser and shared by all pages (localStorage, key `saba2`). Clearing site data erases it.

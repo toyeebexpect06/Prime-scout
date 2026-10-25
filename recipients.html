@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#00743d">
+<meta name="description" content="Scout store owners with rotating message bodies, multiple sending accounts, address checking and no repeat sends.">
+<title>ameenis-solution Scout — Recipients</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="people" data-static>
+<header>
+  <img class="logo" src="logo-mark.png" alt="ameenis-solution Scout logo" width="40" height="40">
+  <div><h1>ameenis-solution</h1><small>Scout</small></div>
+  <span class="ready">● System ready</span><button class="btn" id="inst">Install app</button>
+</header>
+<nav id="nav"></nav>
+<main>
+<div class="eyebrow">Operational workspace</div>
+<h2>Recipients</h2>
+<p class="sub">Manage the next move without losing track of anyone.</p>
+<div id="stats"></div>
+
+<section class="card">
+  <b class="ct">Add a store owner</b>
+  <label style="font-size:16px;color:var(--ink);margin-top:18px">Email</label>
+  <input id="p-one" type="email" placeholder="owner@store.com">
+  <button class="btn p" data-act="addOne" style="width:100%;margin-top:14px;padding:14px">＋ Add recipient</button>
+</section>
+
+<section class="card">
+  <b class="ct">Paste a list</b>
+  <p class="sub" style="margin:8px 0 14px">One email per line — names are worked out for you, duplicates are skipped.</p>
+  <textarea id="p-in" style="min-height:140px" placeholder="ada@adasshop.com&#10;owner@brightsneakers.co"></textarea>
+  <button class="btn" data-act="importList" style="width:100%;margin-top:14px;padding:14px">Import list</button>
+</section>
+
+<section class="card">
+  <b class="ct"><svg class="ic" viewBox="0 0 24 24" style="color:var(--brand);vertical-align:-4px;margin-right:8px"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Check the addresses</b>
+  <p class="sub" style="margin:8px 0 14px">We sort out the addresses that can’t receive mail so you only send to the good ones.</p>
+  <div class="row" style="gap:10px;margin-bottom:14px">
+    <span class="chip g" id="n-good" style="flex:0 0 auto">0 good</span>
+    <span class="chip b" id="n-bad" style="flex:0 0 auto">0 bad</span>
+    <span class="chip u" id="n-unk" style="flex:0 0 auto">0 not checked</span>
+  </div>
+  <button class="btn p" data-act="checkAll" style="padding:14px 18px"><svg class="ic" viewBox="0 0 24 24" style="width:20px;height:20px;vertical-align:-4px;margin-right:8px"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>Check unverified addresses</button>
+  <div class="mrow" style="margin:14px 0 0">
+    <div class="mt"><b>Also send to bad addresses</b><small style="white-space:normal">Off by default — turn on if you want to try them anyway.</small></div>
+    <button class="sw" id="sw-bad" data-act="togBad" aria-label="Also send to bad addresses"></button>
+  </div>
+</section>
+
+<section class="card">
+  <div class="row" style="justify-content:space-between">
+    <b class="ct" style="flex:0 0 auto"><svg class="ic" viewBox="0 0 24 24" style="color:var(--brand);vertical-align:-4px;margin-right:8px"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-4 3-6 7-6s7 2 7 6M16 4.5a3.5 3.5 0 010 7M18 14c2.5.7 4 2.5 4 6"/></svg>Your list (<span id="list-count">0</span>)</b>
+    <button data-act="clearAll" style="flex:0 0 auto;border:0;background:none;color:var(--mute);font:inherit;cursor:pointer">Clear all</button>
+  </div>
+  <div class="seg g" id="flt" style="margin:14px 0">
+    <button data-act="setPf" data-v="all">All</button>
+    <button data-act="setPf" data-v="good">Good</button>
+    <button data-act="setPf" data-v="bad">Bad</button>
+    <button data-act="setPf" data-v="unknown">Unknown</button>
+  </div>
+  <div id="p-list"></div>
+</section>
+</main>
+<div id="toast"></div>
+<script src="app.js" defer></script>
+<script src="recipients.js" defer></script>
+</body>
+</html>
