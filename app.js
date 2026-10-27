@@ -192,7 +192,7 @@ Object.assign(acts,{skipOne(){const r=ready();if(r.length<2)return toast('Nothin
 function pendingFor(id){return S.batches.flatMap(b=>b.items).filter(i=>i.status==='pending'&&i.accId===id).length}
 document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const id=e.target.id;if(id==='a-email'||id==='p-one'){e.preventDefault();acts[id==='a-email'?'addAcc':'addOne']();save();render()}});
 function effAcc(i){const a=S.accs.find(x=>x.id===i.accId);if(a&&a.on)return a;return S.accs.find(x=>x.id===S.backup)||a}
-Object.assign(acts,{setOpen(d){S.opener=d.v},addAcc(){const e=$('a-email').value.trim().toLowerCase();if(!MAIL.test(e))return toast('Enter a valid email');if(S.accs.some(a=>a.email===e))return toast('Account already added');S.accs.push({id:uid(),email:e,label:'',cap:40,on:true});log('Added account '+e);if($('a-email'))$('a-email').value=''},delAcc(d){S.accs=S.accs.filter(x=>x.id!==d.id);if(S.backup===d.id)S.backup=null},open(d){const t=compose(d),[,i]=find(d.b,d.id),a=effAcc(i),to=d.id,op=S.opener||'app',q=encodeURIComponent;let u;if(op==='browser')u=`https://mail.google.com/mail/?view=cm&fs=1&authuser=${q(a?a.email:'')}&to=${q(to)}&su=${q(t.subject)}&body=${q(t.body)}`;else if(op==='go')u=`intent:mailto:${q(to)}?subject=${q(t.subject)}&body=${q(t.body)}#Intent;package=com.google.android.gm.lite;end`;else u=`mailto:${q(to)}?subject=${q(t.subject)}&body=${q(t.body)}`;const l=document.createElement('a');l.href=u;if(op==='browser'){l.target='_blank';l.rel='noopener'}document.body.appendChild(l);l.click();l.remove();toast('Opening Gmail…')}});
+Object.assign(acts,{setOpen(d){S.opener=d.v},addAcc(){const e=$('a-email').value.trim().toLowerCase();if(!MAIL.test(e))return toast('Enter a valid email');if(S.accs.some(a=>a.email===e))return toast('Account already added');S.accs.push({id:uid(),email:e,label:'',cap:40,on:true});log('Added account '+e);if($('a-email'))$('a-email').value=''},delAcc(d){S.accs=S.accs.filter(x=>x.id!==d.id);if(S.backup===d.id)S.backup=null}});
 const _ms=acts.markSent;acts.markSent=d=>{const[,i]=find(d.b,d.id),e=effAcc(i);if(e)i.accId=e.id;_ms(d)};
 document.addEventListener('change',e=>{const c=e.target.closest('[data-cap]');if(c){S.accs.find(x=>x.id===c.dataset.cap).cap=Math.max(1,+c.value||40);save();render();return}const b=e.target.closest('[data-bk]');if(b){S.backup=b.value||null;save();render()}});
 Object.assign(acts,{addOne(){const e=$('p-one').value.trim().toLowerCase();if(!/\S+@\S+/.test(e))return toast('Enter an email');if(addP(e)){log('Added '+e);toast('Added');$('p-one').value=''}else toast('Already on your list')},importList(){let a=0,d=0,x=0;$('p-in').value.split('\n').forEach(l=>{if(!l.trim())return;const[e,n,s]=l.split(',').map(v=>v.trim());if(!/\S+@\S+/.test(e||'')){x++;return}addP(e.toLowerCase(),n,s)?a++:d++});if($('p-in'))$('p-in').value='';log(`Imported ${a}, skipped ${d} duplicates and ${x} lines`);toast(`Added ${a} · ${d} duplicates · ${x} skipped`)},checkAll(){let c=0;S.people.forEach(p=>{if((p.chk||'unknown')==='unknown'){p.chk=chkAddr(p.email);c++}});log('Checked '+c+' addresses');toast(c?'Checked '+c:'Nothing to check')},togBad(){S.sendBad=!S.sendBad},clearAll(){if(confirm('Remove everyone from the list?')){S.people=[];log('Cleared the list')}},setPf(d){pf=d.v}});
@@ -208,13 +208,15 @@ function askFrom(email,ok,no){
 }
 function gUrl(email,m){const q=encodeURIComponent;return m?`https://mail.google.com/mail/?view=cm&fs=1&authuser=${q(email)}&to=${q(m.to)}&su=${q(m.su)}&body=${q(m.body)}`:`https://mail.google.com/mail/?authuser=${q(email)}`}
 function launchUrl(u,tab){const l=document.createElement('a');l.href=u;if(tab){l.target='_blank';l.rel='noopener'}document.body.appendChild(l);l.click();l.remove()}
-function gmailLaunch(email,mode,m){const web=gUrl(email,m);
-  if(mode==='browser'||!/Android/i.test(navigator.userAgent)){launchUrl(web,true);return'web'}
-  const q=encodeURIComponent,pkg=mode==='go'?'com.google.android.gm.lite':'com.google.android.gm',data=m?`${m.to}?subject=${q(m.su)}&body=${q(m.body)}`:'?subject=';
-  launchUrl(`intent:${data}#Intent;scheme=mailto;package=${pkg};S.browser_fallback_url=${q(web)};end`,false);return'app'}
-const _open=d=>{const t=compose(d),[,i]=find(d.b,d.id),a=effAcc(i);gmailLaunch(a?a.email:'',S.opener||'app',{to:d.id,su:t.subject,body:t.body})};
+function gmailLaunch(email,mode,m){
+  if(!MAIL.test(email||''))return null;
+  const web=gUrl(email,m);
+  if(mode==='browser'||!/Android/i.test(navigator.userAgent)){launchUrl(web,true);return web}
+  const q=encodeURIComponent,u='mailto:'+(m?`${q(m.to)}?subject=${q(m.su)}&body=${q(m.body)}`:'');
+  launchUrl(u,false);return u}
+const _open=d=>{const t=compose(d),[,i]=find(d.b,d.id),a=effAcc(i);if(!a||!MAIL.test(a.email||'')){toast('No valid email address for the sending account — nothing was opened');return false}return gmailLaunch(a.email,S.opener||'app',{to:d.id,su:t.subject,body:t.body})!==null};
 acts.open=(d,after,cancel)=>{const[,i]=find(d.b,d.id),a=effAcc(i),op=S.opener||'app';
-  const go=()=>{_open(d);if(a){S.lastFrom=a.email;S.lastFromAt=Date.now();save()}if(after)after()};
+  const orig=S.accs.find(x=>x.id===i.accId),go=()=>{if(_open(d)===false){if(cancel)cancel();return}if(a){S.lastFrom=a.email;S.lastFromAt=Date.now();save()}if(orig&&a&&orig.id!==a.id)notice('Backup account used',esc(orig.email)+' is switched off, so this send used the backup account <b>'+esc(a.email)+'</b>.','OK');if(after)after()};
   if(op==='browser'||!a||!/Android/i.test(navigator.userAgent)||(S.lastFrom===a.email&&Date.now()-(S.lastFromAt||0)<1200000))return go();
   askFrom(a.email,go,()=>{if(cancel)cancel()});
 };
@@ -225,10 +227,12 @@ function notice(title,text,okLabel,cb,cancelLabel){
   document.body.appendChild(o);
   o.onclick=e=>{const m=e.target.dataset.m;if(!m)return;o.remove();if(m==='ok'&&cb)cb()};
 }
-acts.openGmail=d=>{const a=S.accs.find(x=>x.id===d.id);if(!a)return;const op=S.opener||'app',e=esc(a.email);
-  if(op==='browser'||!/Android/i.test(navigator.userAgent)){gmailLaunch(a.email,'browser',null);notice('Opening Gmail for '+e,'Gmail is opening in your browser for '+e+'. If Google shows a sign-in page or an account chooser, sign in as <b>'+e+'</b>. This page can\u2019t tell whether that account was already signed in, so check the address shown in Gmail.','OK');return}
-  try{navigator.clipboard&&navigator.clipboard.writeText(a.email).catch(()=>{})}catch(x){}
-  notice('Open the Gmail app for '+e,'The Gmail app can\u2019t be told which account to use. It opens a blank draft on whichever account it is currently using. Check the From line, and if it isn\u2019t <b>'+e+'</b>, tap it and switch. The address is copied.','Open Gmail',()=>{gmailLaunch(a.email,op,null);S.lastFrom=a.email;S.lastFromAt=Date.now();save()},'Cancel');
+acts.openGmail=d=>{
+  const a=S.accs.find(x=>x.id===d.id);
+  if(!a){toast('Account not found \u2014 nothing was opened');return}
+  if(!MAIL.test(a.email||'')){toast('This account has no valid email address \u2014 nothing was opened');return}
+  const u=gmailLaunch(a.email,'browser',null),e=esc(a.email);
+  notice('Opening Gmail for '+e,'Your browser is opening Gmail for <b>'+e+'</b>. If Google shows a sign-in page or an account chooser, that account is not signed in on this device: sign in as it. This page cannot verify which account actually opened, so check the address under your profile picture in Gmail.<br><br><code style="word-break:break-all;font-size:12px">'+esc(u)+'</code>','OK');
 };
 let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e});
 $('inst').onclick=()=>{if(dp){dp.prompt()}else toast('Use your browser menu: Add to Home Screen')};
