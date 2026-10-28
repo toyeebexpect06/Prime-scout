@@ -212,13 +212,13 @@ function gmailLaunch(email,mode,m){
   if(!MAIL.test(email||''))return null;
   const web=gUrl(email,m);
   if(mode==='browser'||!/Android/i.test(navigator.userAgent)){launchUrl(web,true);return web}
-  const q=encodeURIComponent,u='mailto:'+(m?`${q(m.to)}?subject=${q(m.su)}&body=${q(m.body)}`:'');
+  const q=encodeURIComponent,pkg=mode==='go'?'com.google.android.gm.lite':'com.google.android.gm',
+    u=`intent://compose?to=${q(m?m.to:'')}&from=${q(email)}&subject=${q(m?m.su:'')}&body=${q(m?m.body:'')}#Intent;package=${pkg};scheme=mailto;end`;
   launchUrl(u,false);return u}
 const _open=d=>{const t=compose(d),[,i]=find(d.b,d.id),a=effAcc(i);if(!a||!MAIL.test(a.email||'')){toast('No valid email address for the sending account — nothing was opened');return false}return gmailLaunch(a.email,S.opener||'app',{to:d.id,su:t.subject,body:t.body})!==null};
 acts.open=(d,after,cancel)=>{const[,i]=find(d.b,d.id),a=effAcc(i),op=S.opener||'app';
   const orig=S.accs.find(x=>x.id===i.accId),go=()=>{if(_open(d)===false){if(cancel)cancel();return}if(a){S.lastFrom=a.email;S.lastFromAt=Date.now();save()}if(orig&&a&&orig.id!==a.id)notice('Backup account used',esc(orig.email)+' is switched off, so this send used the backup account <b>'+esc(a.email)+'</b>.','OK');if(after)after()};
-  if(op==='browser'||!a||!/Android/i.test(navigator.userAgent)||(S.lastFrom===a.email&&Date.now()-(S.lastFromAt||0)<1200000))return go();
-  askFrom(a.email,go,()=>{if(cancel)cancel()});
+  return go();
 };
 function notice(title,text,okLabel,cb,cancelLabel){
   if(!document.getElementById('modal-css')){const s=document.createElement('style');s.id='modal-css';s.textContent='.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;z-index:50;padding:16px}.mbox{background:var(--card);color:var(--ink);border-radius:14px;padding:18px;max-width:420px;width:100%}.mbox p{color:var(--mute);margin:8px 0 14px}';document.head.appendChild(s)}
@@ -231,8 +231,9 @@ acts.openGmail=d=>{
   const a=S.accs.find(x=>x.id===d.id);
   if(!a){toast('Account not found \u2014 nothing was opened');return}
   if(!MAIL.test(a.email||'')){toast('This account has no valid email address \u2014 nothing was opened');return}
-  const u=gmailLaunch(a.email,'browser',null),e=esc(a.email);
-  notice('Opening Gmail for '+e,'Your browser is opening Gmail for <b>'+e+'</b>. If Google shows a sign-in page or an account chooser, that account is not signed in on this device: sign in as it. This page cannot verify which account actually opened, so check the address under your profile picture in Gmail.<br><br><code style="word-break:break-all;font-size:12px">'+esc(u)+'</code>','OK');
+  const op=S.opener||'app',app=op!=='browser'&&/Android/i.test(navigator.userAgent),u=gmailLaunch(a.email,op,null),e=esc(a.email);
+  const msg=app?'The Gmail app is opening a blank draft with the From address set to <b>'+e+'</b>. Check the From line before you use it; if it shows another address, tap it and switch.':'Your browser is opening Gmail for <b>'+e+'</b>. If Google shows a sign-in page or an account chooser, that account is not signed in on this device: sign in as it. Check the address under your profile picture in Gmail.';
+  notice('Opening Gmail for '+e,msg+' This page cannot verify which account actually opened.<br><br><code style="word-break:break-all;font-size:12px">'+esc(u)+'</code>','OK');
 };
 let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e});
 $('inst').onclick=()=>{if(dp){dp.prompt()}else toast('Use your browser menu: Add to Home Screen')};
