@@ -16,7 +16,7 @@ if(!S.v2){S.v2=1;S.rot.style='shuffle';S.rot.bag=[];S.msgs=[{id:uid(),title:'Mes
 const PAGES={messages:'index.html',accounts:'accounts.html',batches:'batches.html',people:'recipients.html',rotation:'rotation.html',activity:'activity.html'};
 let tab=document.body.dataset.page||'messages';if(!TABS.includes(tab))tab='messages';
 const save=()=>{try{localStorage.setItem('saba2',JSON.stringify(S))}catch(e){}};
-const toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.className='show';clearTimeout(toast.t);toast.t=setTimeout(()=>t.className='',2200)};
+const toast=(m,ms)=>{const t=document.getElementById('toast');t.textContent=m;t.className='show';clearTimeout(toast.t);toast.t=setTimeout(()=>t.className='',ms||2200)};
 const log=m=>{S.log.unshift({t:Date.now(),m});S.log=S.log.slice(0,200)};
 const today=()=>new Date().toDateString();
 const sentToday=a=>S.batches.flatMap(b=>b.items).filter(i=>i.accId===a&&i.status==='sent'&&i.day===today()).length;
@@ -188,7 +188,7 @@ document.addEventListener('click',e=>{
 });
 Object.assign(acts,{setStyle(d){S.rot.style=d.v;S.rot.bag=[]},showAdd(){addOpen=!addOpen},expand(d){ex=ex===d.id?null:d.id},saveMsg(d){const m=S.msgs.find(x=>x.id===d.id),s=$('e-sub').value.trim(),b=$('e-body').value.trim();if(!s||!b)return toast('Add a subject and body');m.subject=s;m.body=b;ex=null;log('Edited a message body')},addMsg(){const s=$('m-sub').value.trim(),b=$('m-body').value.trim();if(!s||!b)return toast('Add a subject and body');S.msgs.push({id:uid(),title:'Message '+(S.msgs.length+1),subject:s,body:b,on:true});addOpen=false;S.rot.bag=[];log('Added a message body')}});
 acts.setRange=d=>{rng=d.v};
-Object.assign(acts,{skipOne(){const r=ready();if(r.length<2)return toast('Nothing else to skip to');const i=S.people.findIndex(p=>p.email===r[0].email),[p]=S.people.splice(i,1);S.people.push(p);log('Skipped '+p.email)},sendOne(){const s=dState();if(!s.nx)return toast(s.msg);const pr=JSON.stringify(S.rot),{out,sim}=assign(ready().slice(0,1)),o=out[0],b={id:uid(),name:'Send queue '+new Date().toLocaleString(),items:[{email:o.p.email,accId:o.a.id,msgId:o.m.id,grp:S.activeGroup||null,status:'pending'}]};S.rot.m=sim.m;S.rot.a=sim.a;S.rot.bag=sim.bag||[];S.batches.unshift(b);log('Opened send to '+o.p.email);const d={b:b.id,id:o.p.email};acts.open(d,()=>{acts.markSent(d);save();render();toast('Marked as sent')},()=>{acts.putBack(d);S.rot=JSON.parse(pr);save();render()})},putBack(d){const[b,i]=find(d.b,d.id);b.items=b.items.filter(x=>x!==i);if(!b.items.length)S.batches=S.batches.filter(x=>x!==b);log('Put back '+d.id)}});
+Object.assign(acts,{skipOne(){const r=ready();if(r.length<2)return toast('Nothing else to skip to');const i=S.people.findIndex(p=>p.email===r[0].email),[p]=S.people.splice(i,1);S.people.push(p);log('Skipped '+p.email)},sendOne(){const s=dState();if(!s.nx)return toast(s.msg);const pr=JSON.stringify(S.rot),{out,sim}=assign(ready().slice(0,1)),o=out[0],b={id:uid(),name:'Send queue '+new Date().toLocaleString(),items:[{email:o.p.email,accId:o.a.id,msgId:o.m.id,grp:S.activeGroup||null,status:'pending'}]};S.rot.m=sim.m;S.rot.a=sim.a;S.rot.bag=sim.bag||[];S.batches.unshift(b);log('Opened send to '+o.p.email);const d={b:b.id,id:o.p.email};acts.open(d,()=>{acts.markSent(d);save();render();toast('Marked as sent — Gmail should show From: '+(S.accs.find(x=>x.id===b.items[0].accId)||o.a).email,5000)},()=>{acts.putBack(d);S.rot=JSON.parse(pr);save();render()})},putBack(d){const[b,i]=find(d.b,d.id);b.items=b.items.filter(x=>x!==i);if(!b.items.length)S.batches=S.batches.filter(x=>x!==b);log('Put back '+d.id)}});
 function pendingFor(id){return S.batches.flatMap(b=>b.items).filter(i=>i.status==='pending'&&i.accId===id).length}
 document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const id=e.target.id;if(id==='a-email'||id==='p-one'){e.preventDefault();acts[id==='a-email'?'addAcc':'addOne']();save();render()}});
 function effAcc(i){const a=S.accs.find(x=>x.id===i.accId);if(a&&a.on)return a;return S.accs.find(x=>x.id===S.backup)||a}
@@ -215,26 +215,32 @@ function gmailLaunch(email,mode,m){
   const q=encodeURIComponent,pkg=mode==='go'?'com.google.android.gm.lite':'com.google.android.gm',
     u=`intent://compose?to=${q(m?m.to:'')}&from=${q(email)}&subject=${q(m?m.su:'')}&body=${q(m?m.body:'')}#Intent;package=${pkg};scheme=mailto;end`;
   launchUrl(u,false);return u}
-const _open=d=>{const t=compose(d),[,i]=find(d.b,d.id),a=effAcc(i);if(!a||!MAIL.test(a.email||'')){toast('No valid email address for the sending account — nothing was opened');return false}return gmailLaunch(a.email,S.opener||'app',{to:d.id,su:t.subject,body:t.body})!==null};
+const _open=d=>{const t=compose(d),[,i]=find(d.b,d.id),a=effAcc(i);if(!a||!MAIL.test(a.email||'')){toast('No valid email address for the sending account — nothing was opened');return false}if(String(d.id).trim().toLowerCase()===a.email.trim().toLowerCase()){toast('Sender and recipient are the same address — nothing was opened');return false}return gmailLaunch(a.email,S.opener||'app',{to:d.id,su:t.subject,body:t.body})!==null};
 acts.open=(d,after,cancel)=>{const[,i]=find(d.b,d.id),a=effAcc(i),op=S.opener||'app';
   const orig=S.accs.find(x=>x.id===i.accId),go=()=>{if(_open(d)===false){if(cancel)cancel();return}if(a){S.lastFrom=a.email;S.lastFromAt=Date.now();save()}if(orig&&a&&orig.id!==a.id)notice('Backup account used',esc(orig.email)+' is switched off, so this send used the backup account <b>'+esc(a.email)+'</b>.','OK');if(after)after()};
+  if(op!=='browser'&&/Android/i.test(navigator.userAgent))return askGmail(go,()=>{if(cancel)cancel()});
   return go();
 };
-function notice(title,text,okLabel,cb,cancelLabel){
+function notice(title,text,okLabel,cb,cancelLabel,onNo){
   if(!document.getElementById('modal-css')){const s=document.createElement('style');s.id='modal-css';s.textContent='.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;z-index:50;padding:16px}.mbox{background:var(--card);color:var(--ink);border-radius:14px;padding:18px;max-width:420px;width:100%}.mbox p{color:var(--mute);margin:8px 0 14px}';document.head.appendChild(s)}
   const o=document.createElement('div');o.className='modal';
   o.innerHTML=`<div class="mbox"><b style="font-size:18px">${title}</b><p>${text}</p><div class="row">${cancelLabel?`<button class="btn" data-m="no">${cancelLabel}</button>`:''}<button class="btn p" data-m="ok">${okLabel}</button></div></div>`;
   document.body.appendChild(o);
-  o.onclick=e=>{const m=e.target.dataset.m;if(!m)return;o.remove();if(m==='ok'&&cb)cb()};
+  o.onclick=e=>{const m=e.target.dataset.m;if(!m)return;o.remove();if(m==='ok'){if(cb)cb()}else if(m==='no'&&onNo)onNo()};
 }
 acts.openGmail=d=>{
   const a=S.accs.find(x=>x.id===d.id);
   if(!a){toast('Account not found \u2014 nothing was opened');return}
   if(!MAIL.test(a.email||'')){toast('This account has no valid email address \u2014 nothing was opened');return}
-  const op=S.opener||'app',app=op!=='browser'&&/Android/i.test(navigator.userAgent),u=gmailLaunch(a.email,op,null),e=esc(a.email);
-  const msg=app?'The Gmail app is opening a blank draft with the From address set to <b>'+e+'</b>. Check the From line before you use it; if it shows another address, tap it and switch.':'Your browser is opening Gmail for <b>'+e+'</b>. If Google shows a sign-in page or an account chooser, that account is not signed in on this device: sign in as it. Check the address under your profile picture in Gmail.';
-  notice('Opening Gmail for '+e,msg+' This page cannot verify which account actually opened.<br><br><code style="word-break:break-all;font-size:12px">'+esc(u)+'</code>','OK');
+  const op=S.opener||'app',app=op!=='browser'&&/Android/i.test(navigator.userAgent);
+  const go=()=>{gmailLaunch(a.email,op,null);toast(app?'Opening Gmail for '+a.email:'Opening Gmail for '+a.email+' \u2014 sign in as it if Google asks',app?2500:5000)};
+  if(app)askGmail(go);else go();
 };
+function askGmail(ok,no){
+  if(S.gmailOK)return ok();
+  notice('Allow ameenis-solution to open the Gmail app?','This app will open the Gmail app to write a draft with the From address set to the account you choose. It cannot read your mail or see your accounts. Android decides which account Gmail actually uses, so check the From line.','Allow',()=>{S.gmailOK=true;save();ok()},'Not now',no);
+}
+const _so=acts.setOpen;acts.setOpen=d=>{_so(d);if(d.v!=='browser')S.gmailOK=false};
 let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e});
 $('inst').onclick=()=>{if(dp){dp.prompt()}else toast('Use your browser menu: Add to Home Screen')};
 render();
