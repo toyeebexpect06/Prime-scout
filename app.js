@@ -213,7 +213,7 @@ function gmailLaunch(email,mode,m){
   const web=gUrl(email,m);
   if(mode==='browser'||!/Android/i.test(navigator.userAgent)){launchUrl(web,true);return web}
   const q=encodeURIComponent,pkg=mode==='go'?'com.google.android.gm.lite':'com.google.android.gm',
-    u=`intent://compose?to=${q(m?m.to:'')}&from=${q(email)}&subject=${q(m?m.su:'')}&body=${q(m?m.body:'')}#Intent;package=${pkg};scheme=mailto;end`;
+    u=`intent:mailto:${q(m?m.to:'').replace(/%40/g,'@')}?subject=${q(m?m.su:'')}&body=${q(m?m.body:'')}#Intent;action=android.intent.action.SENDTO;package=${pkg};S.authAccount=${q(email)};S.fromAccountString=${q(email)};end`;
   launchUrl(u,false);return u}
 const _open=d=>{const t=compose(d),[,i]=find(d.b,d.id),a=effAcc(i);if(!a||!MAIL.test(a.email||'')){toast('No valid email address for the sending account — nothing was opened');return false}if(String(d.id).trim().toLowerCase()===a.email.trim().toLowerCase()){toast('Sender and recipient are the same address — nothing was opened');return false}return gmailLaunch(a.email,S.opener||'app',{to:d.id,su:t.subject,body:t.body})!==null};
 acts.open=(d,after,cancel)=>{const[,i]=find(d.b,d.id),a=effAcc(i),op=S.opener||'app';
