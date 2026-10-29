@@ -2,6 +2,7 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1612;--card:#16211b;--ink:#e8f1ec;--mute:#93a79c;--line:#26352c;--brand:#2fbf7a;--brand-ink:#04150c;--warn:#f59e0b;--bad:#f87171;--ok:#34d399}}
 :root[data-theme="dark"]{--bg:#0e1612;--card:#16211b;--ink:#e8f1ec;--mute:#93a79c;--line:#26352c;--brand:#2fbf7a;--brand-ink:#04150c;--warn:#f59e0b;--bad:#f87171;--ok:#34d399}
 *,*::before,*::after{box-sizing:inherit}
+html,body{touch-action:pan-x pan-y}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--uf,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif);-webkit-text-size-adjust:100%}
 button,input,select,textarea{font-family:inherit}
@@ -162,3 +163,4 @@ body:not([data-page="activity"]) .item{border-color:var(--line)}
   .queue-health dd{margin:0;font-weight:600}
   main{padding-top:20px}
 }
+body input,body select,body textarea{font-size:16px!important}
