@@ -12,11 +12,35 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body data-page="people" data-static>
-<header>
-  <img class="logo" src="logo-mark.png" alt="ameenis-solution Scout logo" width="40" height="40">
-  <div><h1>ameenis-solution</h1><small>Scout</small></div>
-  <span class="ready">● System ready</span><button class="btn" id="inst">Install app</button>
+<header class="app-header">
+  <img class="logo" src="logo-mark.png" alt="ameenis-solution Scout logo" width="50" height="50">
+  <div class="brand"><h1>ameenis-solution</h1><p>Outreach control desk</p></div>
+  <div class="header-status"><span class="ready"><i></i>System ready</span><button class="btn" id="inst" type="button">Install app</button></div>
 </header>
+<nav class="tabs" aria-label="Sections">
+  <a href="index.html" data-tab="messages"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Messages</span></a>
+  <a href="accounts.html" data-tab="accounts" class="on" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>Accounts</span></a>
+  <a href="batches.html" data-tab="batches"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5M3 17l9 5 9-5"/></svg><span>Batches</span></a>
+  <a href="recipients.html" data-tab="people"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-4 3-6 7-6s7 2 7 6M16 4.5a3.5 3.5 0 010 7M18 14c2.5.7 4 2.5 4 6"/></svg><span>People</span></a>
+  <a href="rotation.html" data-tab="rotation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span>Rotation</span></a>
+  <a href="activity.html" data-tab="activity"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span>Activity</span></a>
+</nav>
+<div class="layout">
+<aside class="sidebar">
+  <p class="side-title">Workspace</p>
+  <nav class="side-nav" aria-label="Workspace">
+    <a href="index.html" data-tab="messages">Messages</a>
+    <a href="accounts.html" data-tab="accounts" class="on" aria-current="page">Accounts</a>
+    <a href="batches.html" data-tab="batches">Batches</a>
+    <a href="recipients.html" data-tab="people">Recipients</a>
+    <a href="rotation.html" data-tab="rotation">Rotation preview</a>
+    <a href="activity.html" data-tab="activity">Activity</a>
+  </nav>
+  <div class="queue-health">
+    <h2>Queue health</h2>
+    <dl><div><dt>Ready</dt><dd id="qh-ready">0</dd></div><div><dt>Verified</dt><dd id="qh-ok">0</dd></div><div><dt>Needs review</dt><dd id="qh-bad">0</dd></div></dl>
+  </div>
+</aside>
 <nav id="nav"></nav>
 <main>
 <div class="eyebrow">Operational workspace</div>
