@@ -25,13 +25,15 @@ const ready=()=>{const q=queued();return S.people.filter(p=>p.status!=='optout'&
 const fill=(t,p)=>t.replace(/\{name\}/g,p.name||'there').replace(/\{store\}/g,p.store||'your store');
 function pick(list,key,sim){const n=list.length;if(!n)return null;const i=sim[key]%n;sim[key]++;return list[i]}
 function assign(people){
-  const ms=S.msgs.filter(m=>m.on),as=S.accs.filter(a=>a.on&&(!S.activeGroup||a.group===S.activeGroup)),cg=(S.groups||[]).find(x=>x.id===S.activeGroup),rem=cg?cg.limit-cg.count-S.batches.flatMap(b=>b.items).filter(i=>i.status==='pending'&&i.grp===cg.id).length:Infinity;
+  const ms=S.msgs.filter(m=>m.on),as=S.accs.filter(a=>a.on&&(!S.activeGroup||a.group===S.activeGroup)),cg=(S.groups||[]).find(x=>x.id===S.activeGroup),allPend=S.batches.flatMap(b=>b.items).filter(i=>i.status==='pending'),left=a=>cg?cg.limit-((cg.counts||{})[a.id]||0)-allPend.filter(i=>i.grp===cg.id&&i.accId===a.id).length:Infinity;
   if((S.rot.style||'shuffle')==='shuffle'&&!(S.rot.bag||[]).length)S.rot.bag=ms.map(m=>m.id).sort(()=>Math.random()-.5);
   const sim={m:S.rot.m,a:S.rot.a,bag:(S.rot.bag||[]).slice()},out=[],used={};
-  for(const p of people){if(out.length>=rem)break;
-    const bk=S.accs.find(x=>x.id===S.backup),open=(as.length?as:bk?[bk]:[]);
-    const a=pick(open,'a',sim),m=nextMsg(ms,sim);
-    if(!a||!m)break;used[a.id]=(used[a.id]||0)+1;out.push({p,a,m});
+  for(const p of people){
+    const bk=S.accs.find(x=>x.id===S.backup),open=as.length?as.filter(a=>left(a)-(used[a.id]||0)>0):(bk?[bk]:[]);
+    const a=pick(open,'a',sim);
+    if(!a)break;
+    const m=nextMsg(ms,sim);
+    if(!m)break;used[a.id]=(used[a.id]||0)+1;out.push({p,a,m});
   }
   return{out,sim};
 }
@@ -75,16 +77,16 @@ views.rotation=()=>`<h2>Rotation preview</h2><p class="sub"></p>`+oldB().replace
 views.accounts=()=>{const g=S.groups||[];return `<h2>Accounts</h2><p class="sub"></p>
 <div class="card"><div class="row"><div><label>Gmail address</label><input id="a-email" type="email" placeholder="you@gmail.com"></div><div><label>Label</label><input id="a-label" placeholder="Main"></div></div><div class="row" style="margin-top:10px"><button class="btn p" data-act="addAcc">Add account</button></div></div>
 <div class="card">${S.accs.map(a=>`<div class="item"><div style="flex:1"><b>${esc(a.label||a.email)}</b> <span class="tag ${a.on?'ok':''}">${a.on?'On':'Off'}</span><p>${esc(a.email)} · ${sentToday(a.id)} sent today</p><label>Batch</label><select data-grp="${a.id}"><option value="">No batch</option>${g.map(x=>`<option value="${x.id}" ${a.group===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div><div class="acts"><button class="btn" data-act="togAcc" data-id="${a.id}">${a.on?'Pause':'Enable'}</button><button class="btn d" data-act="delAcc" data-id="${a.id}">Delete</button></div></div>`).join('')||'<div class="empty">Add at least one account to start.</div>'}</div>`};
-views.batches=()=>{const g=S.groups||[],act=S.activeGroup,cur=g.find(x=>x.id===act),full=cur&&cur.count>=cur.limit;return `<h2>Batches</h2><p class="sub"></p>
-<div class="card"><b style="font-size:22px">Account batches</b><p class="sub" style="margin:6px 0 14px">Each batch has its own accounts and send limit. Tap a batch to see its accounts and progress; only the active batch sends.</p>
+views.batches=()=>{const g=S.groups||[],act=S.activeGroup,cur=g.find(x=>x.id===act),ga=cur?S.accs.filter(a=>a.on&&a.group===cur.id):[],full=cur&&ga.length>0&&ga.every(a=>((cur.counts||{})[a.id]||0)>=cur.limit);return `<h2>Batches</h2><p class="sub"></p>
+<div class="card"><b style="font-size:22px">Account batches</b><p class="sub" style="margin:6px 0 14px">Each batch has its own accounts. The send limit applies to every account separately. Tap a batch to see its accounts and progress; only the active batch sends.</p>
 <div class="row"><button class="btn ${act?'':'p'}" data-act="grpAll">All accounts</button><button class="btn" data-act="grpAdd" style="border:0;background:none">＋ Add batch</button></div>
-${gAdd?`<div class="row" style="margin:10px 0"><div><label>Send limit per round</label><input id="g-lim" type="number" value="50" min="1"></div><button class="btn p" data-act="grpSave">Save batch</button></div>`:''}
-${g.map(x=>{const n=S.accs.filter(a=>a.group===x.id);return `<div class="mrow" style="margin-top:10px;${x.id===act?'border-color:var(--brand)':''}"><div class="mt" data-act="grpPick" data-id="${x.id}" style="cursor:pointer"><b>${esc(x.name)} ${x.id===act?'<span class="tag ok">Active</span>':''}</b><small>${n.length} accounts · ${x.count}/${x.limit} sent</small>${n.length?`<small>${n.map(a=>esc(a.email)).join(', ')}</small>`:''}</div><button class="trash" data-act="grpDel" data-id="${x.id}" aria-label="Delete batch">✕</button></div>`}).join('')||'<p class="sub" style="text-align:center;padding:24px 0 30px">No batches yet — add one to group your Gmail accounts.</p>'}
+${gAdd?`<div class="row" style="margin:10px 0"><div><label>Send limit per account, per round</label><input id="g-lim" type="number" value="50" min="1"></div><button class="btn p" data-act="grpSave">Save batch</button></div>`:''}
+${g.map(x=>{const n=S.accs.filter(a=>a.group===x.id);return `<div class="mrow" style="margin-top:10px;${x.id===act?'border-color:var(--brand)':''}"><div class="mt" data-act="grpPick" data-id="${x.id}" style="cursor:pointer"><b>${esc(x.name)} ${x.id===act?'<span class="tag ok">Active</span>':''}</b><small>${n.length} accounts · ${x.limit} per account · ${x.count} sent</small>${n.length?`<small>${n.map(a=>esc(a.email)+' '+((x.counts||{})[a.id]||0)+'/'+x.limit).join(' · ')}</small>`:''}</div><button class="trash" data-act="grpDel" data-id="${x.id}" aria-label="Delete batch">✕</button></div>`}).join('')||'<p class="sub" style="text-align:center;padding:24px 0 30px">No batches yet — add one to group your Gmail accounts.</p>'}
 ${full?`<button class="btn p" data-act="grpNext" style="width:100%;margin-top:12px">Switch to next batch</button>`:''}</div>
 <div class="card"><b style="font-size:22px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linejoin="round" style="vertical-align:-3px"><path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5M3 17l9 5 9-5"/></svg> How batches work</b><p class="sub" style="margin:8px 0 14px">A batch is a group of Gmail accounts. Only the active batch sends, so you can rest one group and run another.</p>
 <p><b>1.</b> Group accounts into batches in the Accounts tab — each Gmail has a batch box under it.</p>
 <p><b>2.</b> Tap a batch above to switch it on. Sends then move only between its accounts.</p>
-<p><b>3.</b> When the round count is full, tap <b>Switch to next batch</b>. It never switches by itself.</p>
+<p><b>3.</b> Every account sends up to the limit. When all accounts in the batch have reached it, tap <b>Switch to next batch</b>. It never switches by itself.</p>
 <p><b>4.</b> Any batch can be reused — tap Batch 1 again whenever you want and its count starts fresh. After the last batch, the next one is Batch 1.</p>
 ${g.length?'':'<small class="sub">No batches yet — add one above to get started.</small>'}</div>`};
 views.rotation=()=>{const ms=S.msgs,lbl=m=>'Message '+(ms.findIndex(x=>x.id===m.id)+1);
@@ -123,7 +125,7 @@ function dState(){
   if(!S.accs.some(a=>a.on&&(!S.activeGroup||a.group===S.activeGroup))&&!S.accs.some(a=>a.id===S.backup))return{msg:S.accs.length?'Switch on a sending account first.':'Add a sending account first.'};
   if(!S.msgs.some(m=>m.on))return{msg:'Switch on a message first.'};
   const nx=assign(ready().slice(0,1)).out[0];
-  if(!nx)return{msg:ready().length?'The active batch has reached its send limit.':'Add a recipient first.'};
+  if(!nx)return{msg:ready().length?'Every account in the active batch has reached its send limit.':'Add a recipient first.'};
   return{nx};
 }
 function dispatchCards(){
@@ -177,7 +179,7 @@ mkBatch(){if(!S.msgs.some(m=>m.on))return toast('Turn on a message body');if(!S.
  const{out,sim}=assign(ready().slice(0,Math.max(1,+$('b-n').value||10)));if(!out.length)return toast('Nothing ready, or the batch limit is reached');
  S.rot.m=sim.m;S.rot.a=sim.a;S.rot.bag=sim.bag||[];S.batches.unshift({id:uid(),name:'Send queue '+new Date().toLocaleString(),items:out.map(o=>({email:o.p.email,accId:o.a.id,msgId:o.m.id,grp:S.activeGroup||null,status:'pending'}))});log('Created batch of '+out.length)},
 delBatch(d){S.batches=S.batches.filter(x=>x.id!==d.id)},
-markSent(d){const[,i]=find(d.b,d.id);i.status='sent';i.day=today();i.ts=Date.now();const gg=(S.groups||[]).find(x=>x.id===i.grp);if(gg)gg.count++;if(!S.sent.includes(i.email))S.sent.push(i.email);log('Sent to '+i.email)},
+markSent(d){const[,i]=find(d.b,d.id);i.status='sent';i.day=today();i.ts=Date.now();const gg=(S.groups||[]).find(x=>x.id===i.grp);if(gg){gg.count++;gg.counts=gg.counts||{};gg.counts[i.accId]=(gg.counts[i.accId]||0)+1}if(!S.sent.includes(i.email))S.sent.push(i.email);log('Sent to '+i.email)},
 copy(d){const t=compose(d);navigator.clipboard&&navigator.clipboard.writeText(t.subject+'\n\n'+t.body).then(()=>toast('Copied'),()=>toast('Copy blocked'))},
 open(d){const t=compose(d);location.href='mailto:'+encodeURIComponent(d.id)+'?subject='+encodeURIComponent(t.subject)+'&body='+encodeURIComponent(t.body)},
 reset(){if(confirm('Erase everything?')){S=JSON.parse(JSON.stringify(DEF));S.msgs.forEach(m=>m.id=uid())}}
@@ -203,7 +205,7 @@ Object.assign(acts,{setOpen(d){S.opener=d.v},addAcc(){const e=$('a-email').value
 const _ms=acts.markSent;acts.markSent=d=>{const[,i]=find(d.b,d.id),e=effAcc(i);if(e)i.accId=e.id;_ms(d)};
 document.addEventListener('change',e=>{const c=e.target.closest('[data-cap]');if(c){S.accs.find(x=>x.id===c.dataset.cap).cap=Math.max(1,+c.value||40);save();render();return}const b=e.target.closest('[data-bk]');if(b){S.backup=b.value||null;save();render()}});
 Object.assign(acts,{addOne(){const e=$('p-one').value.trim().toLowerCase();if(!/\S+@\S+/.test(e))return toast('Enter an email');if(addP(e)){log('Added '+e);toast('Added');$('p-one').value=''}else toast('Already on your list')},importList(){let a=0,d=0,x=0;$('p-in').value.split('\n').forEach(l=>{if(!l.trim())return;const[e,n,s]=l.split(',').map(v=>v.trim());if(!/\S+@\S+/.test(e||'')){x++;return}addP(e.toLowerCase(),n,s)?a++:d++});if($('p-in'))$('p-in').value='';log(`Imported ${a}, skipped ${d} duplicates and ${x} lines`);toast(`Added ${a} · ${d} duplicates · ${x} skipped`)},checkAll(){let c=0;S.people.forEach(p=>{if((p.chk||'unknown')==='unknown'){p.chk=chkAddr(p.email);c++}});log('Checked '+c+' addresses');toast(c?'Checked '+c:'Nothing to check')},togBad(){S.sendBad=!S.sendBad},clearAll(){if(confirm('Remove everyone from the list?')){S.people=[];log('Cleared the list')}},setPf(d){pf=d.v}});
-Object.assign(acts,{grpAll(){S.activeGroup=null},grpAdd(){gAdd=!gAdd},grpSave(){S.groups=S.groups||[];S.groups.push({id:uid(),name:'Batch '+(S.groups.length+1),limit:Math.max(1,+$('g-lim').value||50),count:0});gAdd=false;log('Added batch '+S.groups.length)},grpPick(d){const x=S.groups.find(g=>g.id===d.id);S.activeGroup=x.id;x.count=0;log(x.name+' switched on, count starts fresh')},grpNext(){const g=S.groups,i=g.findIndex(x=>x.id===S.activeGroup),x=g[(i+1)%g.length];S.activeGroup=x.id;x.count=0;log('Switched to '+x.name)},grpDel(d){S.groups=S.groups.filter(x=>x.id!==d.id);S.accs.forEach(a=>{if(a.group===d.id)a.group=null});if(S.activeGroup===d.id)S.activeGroup=null}});
+Object.assign(acts,{grpAll(){S.activeGroup=null},grpAdd(){gAdd=!gAdd},grpSave(){S.groups=S.groups||[];S.groups.push({id:uid(),name:'Batch '+(S.groups.length+1),limit:Math.max(1,+$('g-lim').value||50),count:0,counts:{}});gAdd=false;log('Added batch '+S.groups.length)},grpPick(d){const x=S.groups.find(g=>g.id===d.id);S.activeGroup=x.id;x.count=0;x.counts={};log(x.name+' switched on, count starts fresh')},grpNext(){const g=S.groups,i=g.findIndex(x=>x.id===S.activeGroup),x=g[(i+1)%g.length];S.activeGroup=x.id;x.count=0;x.counts={};log('Switched to '+x.name)},grpDel(d){S.groups=S.groups.filter(x=>x.id!==d.id);S.accs.forEach(a=>{if(a.group===d.id)a.group=null});if(S.activeGroup===d.id)S.activeGroup=null}});
 document.addEventListener('change',e=>{const s=e.target.closest('[data-grp]');if(!s)return;S.accs.find(x=>x.id===s.dataset.grp).group=s.value||null;save();render()});
 function askFrom(email,ok,no){
   if(!document.getElementById('modal-css')){const s=document.createElement('style');s.id='modal-css';s.textContent='.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;z-index:50;padding:16px}.mbox{background:var(--card);color:var(--ink);border-radius:14px;padding:18px;max-width:420px;width:100%}.mbox p{color:var(--mute);margin:8px 0 14px}';document.head.appendChild(s)}
