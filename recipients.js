@@ -7,7 +7,8 @@ window.pageRender=()=>{
   $('n-unk').textContent=n('unknown')+' not checked';
   $('sw-bad').classList.toggle('on',!!S.sendBad);
   $('list-count').textContent=P.length;
+  const cc=cleanCounts();$('n-temp').textContent=cc.temp+' found';$('n-dup').textContent=cc.dup+' found';$('n-inv').textContent=cc.inv+' found';
   document.querySelectorAll('#flt button').forEach(b=>b.classList.toggle('on',b.dataset.v===pf));
-  $('p-list').innerHTML=list.map(p=>{const s=st(p);return `<div class="item"><div><b>${esc(p.email)}</b> <span class="tag ${s==='good'?'ok':s==='bad'?'bad':''}">${T[s]}</span><p>${esc([p.name,p.store].filter(Boolean).join(' \u00b7 '))}${S.sent.includes(p.email)?' \u00b7 sent':''}${p.status==='optout'?' \u00b7 opted out':''}</p></div><div class="acts"><button class="btn" data-act="optout" data-id="${esc(p.email)}">Opt out</button><button class="btn d" data-act="delPerson" data-id="${esc(p.email)}">\u2715</button></div></div>`}).join('')||'<p class="sub" style="text-align:center;padding:24px 0">Nothing here yet.</p>';
+  const lim=window.plimit||100;$('p-list').innerHTML=list.slice(0,lim).map(p=>{const s=st(p);return `<div class="item"><div><b>${esc(p.email)}</b> <span class="tag ${s==='good'?'ok':s==='bad'?'bad':''}">${T[s]}</span><p>${esc([p.name,p.store].filter(Boolean).join(' \u00b7 '))}${sentSet().has(p.email)?' \u00b7 sent':''}${p.status==='optout'?' \u00b7 opted out':''}</p></div><div class="acts"><button class="btn" data-act="optout" data-id="${esc(p.email)}">Opt out</button><button class="btn d" data-act="delPerson" data-id="${esc(p.email)}">\u2715</button></div></div>`}).join('')||'<p class="sub" style="text-align:center;padding:24px 0">Nothing here yet.</p>'+(list.length>lim?`<button class="btn" data-act="moreP" style="width:100%;margin-top:10px;padding:12px">Show more (${list.length-lim} left)</button>`:'');
 };
 render();
