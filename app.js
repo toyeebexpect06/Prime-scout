@@ -268,3 +268,4 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.
 document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
 Object.assign(acts,{togCompact(){S.compact=!S.compact},removeTemp(){purge('temp')},removeInvalid(){purge('inv')},removeDup(){purge('dup')},removeJunk(){purge('all')}});
 Object.assign(acts,{moreP(){window.plimit=(window.plimit||100)+300}});
+Object.assign(acts,{clearAccs(){const n=S.accs.length;if(!n)return toast('No accounts to clear');if(!confirm('Delete all '+n+' account'+(n>1?'s':'')+'? This cannot be undone.'))return;S.accs=[];S.backup=null;(S.groups||[]).forEach(x=>{x.count=0;x.counts={}});log('Cleared all accounts');toast('Deleted '+n+' accounts')}});
