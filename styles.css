@@ -164,3 +164,6 @@ body:not([data-page="activity"]) .item{border-color:var(--line)}
   main{padding-top:20px}
 }
 body input,body select,body textarea{font-size:16px!important}
+.stats{grid-template-columns:repeat(5,1fr)}
+.stats .stat b{font-size:20px}
+.stats .stat i{font-size:11px}
