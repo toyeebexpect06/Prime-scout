@@ -15,7 +15,7 @@ S=S||DEF;
 if(!S.v2){S.v2=1;S.rot.style='shuffle';S.rot.bag=[];S.msgs=[{id:uid(),title:'Message 1',subject:'Quick idea for {name}',body:'Hi {name},\n\nI had a quick idea that could help you get more orders. Open to a short chat?\n\nThanks!',on:true},{id:uid(),title:'Message 2',subject:'A thought about {name}',body:'Hello {name},\n\nI spotted a couple of quick wins for your store and would be happy to share them for free.\n\nBest regards',on:true},{id:uid(),title:'Message 3',subject:'{name} — worth a look?',body:'{name}, short note: I help store owners improve conversions. Want a few ideas?\n\nCheers',on:true}]}
 const PAGES={messages:'index.html',accounts:'accounts.html',batches:'batches.html',people:'recipients.html',rotation:'rotation.html',activity:'activity.html'};
 let tab=(window.SPA&&location.hash.slice(1))||document.body.dataset.page||'messages';if(!TABS.includes(tab))tab='messages';
-let _st=null;const _flush=()=>{if(_st){clearTimeout(_st);_st=null}try{localStorage.setItem('saba2',JSON.stringify(S))}catch(e){}};
+let _st=null;const _flush=()=>{if(_st){clearTimeout(_st);_st=null}try{localStorage.setItem('saba2',JSON.stringify(S))}catch(e){toast('Storage is full — your latest changes were not saved')}};
 const save=()=>{if(_st)clearTimeout(_st);_st=setTimeout(_flush,300)};
 addEventListener('pagehide',_flush);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_flush()});
 let _ss=null,_sr=null,_sl=-1;const sentSet=()=>{if(_sr!==S.sent||_sl!==S.sent.length){_ss=new Set(S.sent);_sr=S.sent;_sl=S.sent.length}return _ss};
@@ -213,7 +213,7 @@ function effAcc(i){const a=S.accs.find(x=>x.id===i.accId);if(a&&a.on)return a;re
 Object.assign(acts,{setOpen(d){S.opener=d.v},addAcc(){const e=$('a-email').value.trim().toLowerCase();if(!MAIL.test(e))return toast('Enter a valid email');if(S.accs.some(a=>a.email===e))return toast('Account already added');S.accs.push({id:uid(),email:e,label:'',cap:40,on:true});log('Added account '+e);if($('a-email'))$('a-email').value=''},delAcc(d){S.accs=S.accs.filter(x=>x.id!==d.id);if(S.backup===d.id)S.backup=null}});
 const _ms=acts.markSent;acts.markSent=d=>{const[,i]=find(d.b,d.id),e=effAcc(i);if(e)i.accId=e.id;_ms(d)};
 document.addEventListener('change',e=>{const c=e.target.closest('[data-cap]');if(c){S.accs.find(x=>x.id===c.dataset.cap).cap=Math.max(1,+c.value||40);save();render();return}const b=e.target.closest('[data-bk]');if(b){S.backup=b.value||null;save();render()}});
-Object.assign(acts,{addOne(){const e=$('p-one').value.trim().toLowerCase();if(!/\S+@\S+/.test(e))return toast('Enter an email');if(addP(e)){log('Added '+e);toast('Added');$('p-one').value=''}else toast('Already on your list')},importList(){let a=0,d=0,x=0;$('p-in').value.split('\n').forEach(l=>{if(!l.trim())return;const[e,n,s]=l.split(',').map(v=>v.trim());if(!/\S+@\S+/.test(e||'')){x++;return}addP(e.toLowerCase(),n,s)?a++:d++});if($('p-in'))$('p-in').value='';log(`Imported ${a}, skipped ${d} duplicates and ${x} lines`);toast(`Added ${a} · ${d} duplicates · ${x} skipped`)},checkAll(){let c=0;S.people.forEach(p=>{if((p.chk||'unknown')==='unknown'){p.chk=chkAddr(p.email);c++}});log('Checked '+c+' addresses');toast(c?'Checked '+c:'Nothing to check')},togBad(){S.sendBad=!S.sendBad},clearAll(){if(confirm('Remove everyone from the list?')){S.people=[];log('Cleared the list')}},setPf(d){pf=d.v}});
+Object.assign(acts,{addOne(){const e=$('p-one').value.trim().toLowerCase();if(!/\S+@\S+/.test(e))return toast('Enter an email');if(addP(e)){log('Added '+e);toast('Added');$('p-one').value=''}else toast('Already on your list')},importList(){const r=importText($('p-in').value);if($('p-in'))$('p-in').value='';const m=importMsg(r);S.lastImport=m;window.plimit=100;log('Imported: '+m);toast(m,5000)},checkAll(){let c=0;S.people.forEach(p=>{if((p.chk||'unknown')==='unknown'){p.chk=chkAddr(p.email);c++}});log('Checked '+c+' addresses');toast(c?'Checked '+c:'Nothing to check')},togBad(){S.sendBad=!S.sendBad},clearAll(){if(confirm('Remove everyone from the list?')){S.people=[];log('Cleared the list')}},setPf(d){pf=d.v}});
 Object.assign(acts,{grpAll(){S.activeGroup=null},grpAdd(){gAdd=!gAdd},grpSave(){S.groups=S.groups||[];S.groups.push({id:uid(),name:'Batch '+(S.groups.length+1),limit:Math.max(1,+$('g-lim').value||50),count:0,counts:{}});gAdd=false;log('Added batch '+S.groups.length)},grpPick(d){const x=S.groups.find(g=>g.id===d.id);S.activeGroup=x.id;x.count=0;x.counts={};log(x.name+' switched on, count starts fresh')},grpNext(){const g=S.groups,i=g.findIndex(x=>x.id===S.activeGroup),x=g[(i+1)%g.length];S.activeGroup=x.id;x.count=0;x.counts={};log('Switched to '+x.name)},grpDel(d){S.groups=S.groups.filter(x=>x.id!==d.id);S.accs.forEach(a=>{if(a.group===d.id)a.group=null});if(S.activeGroup===d.id)S.activeGroup=null}});
 document.addEventListener('change',e=>{const s=e.target.closest('[data-grp]');if(!s)return;S.accs.find(x=>x.id===s.dataset.grp).group=s.value||null;save();render()});
 function askFrom(email,ok,no){
@@ -269,3 +269,24 @@ document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault
 Object.assign(acts,{togCompact(){S.compact=!S.compact},removeTemp(){purge('temp')},removeInvalid(){purge('inv')},removeDup(){purge('dup')},removeJunk(){purge('all')}});
 Object.assign(acts,{moreP(){window.plimit=(window.plimit||100)+300}});
 Object.assign(acts,{clearAccs(){const n=S.accs.length;if(!n)return toast('No accounts to clear');if(!confirm('Delete all '+n+' account'+(n>1?'s':'')+'? This cannot be undone.'))return;S.accs=[];S.backup=null;(S.groups||[]).forEach(x=>{x.count=0;x.counts={}});log('Cleared all accounts');toast('Deleted '+n+' accounts')}});
+
+function importText(t){
+  const EM=/[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/g;
+  const have=new Set(S.people.map(p=>p.email)),sent=sentSet();
+  let a=0,inList=0,wasSent=0,bad=0;
+  for(const line of String(t).replace(/^\uFEFF/,'').split(/\r\n|\n|\r/)){
+    if(!line.trim())continue;
+    const m=line.match(EM);
+    if(!m){bad++;continue}
+    const cols=line.split(/[,;\t]/).map(v=>v.trim().replace(/^["']|["']$/g,''));
+    const first=(cols[0]||'').toLowerCase();
+    const items=(m.length===1&&first===m[0].toLowerCase())?[[first,cols[1]&&!cols[1].includes('@')?cols[1]:'',cols[2]&&!cols[2].includes('@')?cols[2]:'']]:m.map(x=>[x.toLowerCase(),'','']);
+    for(const[e,n,s]of items){
+      if(have.has(e)){inList++;continue}
+      if(sent.has(e)){wasSent++;continue}
+      const v=derive(e);S.people.push({email:e,name:n||v.name,store:s||v.store,status:'ok',chk:'unknown'});have.add(e);a++;
+    }
+  }
+  return{a,inList,wasSent,bad};
+}
+const importMsg=r=>`Added ${r.a} \u00b7 ${r.inList} already in list \u00b7 ${r.wasSent} already sent \u00b7 ${r.bad} lines skipped`;
