@@ -63,6 +63,13 @@
 </section>
 
 <section class="card">
+  <b class="ct">Import from a file</b>
+  <p class="sub" style="margin:8px 0 14px">CSV, TXT, TSV or VCF. Emails are found automatically and duplicates are skipped. If the email is the first column, the next columns become name and store.</p>
+  <label class="btn p" for="p-file" style="display:block;box-sizing:border-box;width:100%;text-align:center;padding:14px;cursor:pointer">Choose file</label>
+  <input type="file" id="p-file" accept=".csv,.txt,.tsv,.vcf,.json,text/*" multiple style="display:none">
+</section>
+
+<section class="card">
   <b class="ct"><svg class="ic" viewBox="0 0 24 24" style="color:var(--brand);vertical-align:-4px;margin-right:8px"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Check the addresses</b>
   <p class="sub" style="margin:8px 0 14px">We sort out the addresses that can’t receive mail so you only send to the good ones.</p>
   <div class="row" style="gap:10px;margin-bottom:14px">
@@ -75,6 +82,15 @@
     <div class="mt"><b>Also send to bad addresses</b><small style="white-space:normal">Off by default — turn on if you want to try them anyway.</small></div>
     <button class="sw" id="sw-bad" data-act="togBad" aria-label="Also send to bad addresses"></button>
   </div>
+</section>
+
+<section class="card">
+  <b class="ct">Clean up the list</b>
+  <p class="sub" style="margin:8px 0 14px">Remove addresses you don’t want to send to. Nothing is removed until you confirm.</p>
+  <div class="mrow"><div class="mt"><b>Temporary emails</b><small id="n-temp" style="white-space:normal">0 found</small></div><button class="btn d" data-act="removeTemp">Remove</button></div>
+  <div class="mrow"><div class="mt"><b>Duplicates</b><small id="n-dup" style="white-space:normal">0 found</small></div><button class="btn d" data-act="removeDup">Remove</button></div>
+  <div class="mrow"><div class="mt"><b>Invalid emails</b><small id="n-inv" style="white-space:normal">0 found</small></div><button class="btn d" data-act="removeInvalid">Remove</button></div>
+  <button class="btn p" data-act="removeJunk" style="width:100%;margin-top:14px;padding:14px">Remove all three</button>
 </section>
 
 <section class="card">
