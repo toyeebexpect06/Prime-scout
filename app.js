@@ -16,18 +16,22 @@ if(!S.v2){S.v2=1;S.rot.style='shuffle';S.rot.bag=[];S.msgs=[{id:uid(),title:'Mes
 const PAGES={messages:'index.html',accounts:'accounts.html',batches:'batches.html',people:'recipients.html',rotation:'rotation.html',activity:'activity.html'};
 let tab=(window.SPA&&location.hash.slice(1))||document.body.dataset.page||'messages';if(!TABS.includes(tab))tab='messages';
 let _st=null,_booted=false,_ok=true,_db=null;
+const _BIG=['people','sent','batches','log'];
 const _dbp=new Promise(res=>{try{const r=indexedDB.open('primescout',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{_db=r.result;res(_db)};r.onerror=r.onblocked=()=>res(null)}catch(e){res(null)}});
-const idbPut=(p,sn)=>{const go=()=>new Promise(res=>{if(!_db)return res(false);try{const tx=_db.transaction('kv','readwrite'),st=tx.objectStore('kv');st.put(p,'people');st.put(sn,'sent');tx.oncomplete=()=>res(true);tx.onerror=tx.onabort=()=>res(false)}catch(e){res(false)}});return _db?go():_dbp.then(go)};
-const idbGet=()=>_dbp.then(()=>new Promise(res=>{if(!_db)return res(null);try{const tx=_db.transaction('kv'),a=tx.objectStore('kv').get('people'),b=tx.objectStore('kv').get('sent');tx.oncomplete=()=>res({people:a.result,sent:b.result});tx.onerror=tx.onabort=()=>res(null)}catch(e){res(null)}}));
-const _lite=()=>JSON.stringify(Object.assign({},S,{people:[],sent:[]}));
+const idbPut=o=>{const go=()=>new Promise(res=>{if(!_db)return res(false);try{const tx=_db.transaction('kv','readwrite'),st=tx.objectStore('kv');for(const k in o)st.put(o[k],k);tx.oncomplete=()=>res(true);tx.onerror=tx.onabort=()=>res(false)}catch(e){res(false)}});return _db?go():_dbp.then(go)};
+const idbGet=()=>_dbp.then(()=>new Promise(res=>{if(!_db)return res(null);try{const tx=_db.transaction('kv'),st=tx.objectStore('kv'),q={};_BIG.forEach(k=>q[k]=st.get(k));tx.oncomplete=()=>{const o={};_BIG.forEach(k=>o[k]=q[k].result);res(o)};tx.onerror=tx.onabort=()=>res(null)}catch(e){res(null)}}));
+const _lite=lvl=>JSON.stringify(Object.assign({},S,lvl>=2?{people:[],sent:[],batches:[],log:[]}:{people:[],sent:[]}));
 const _flush=()=>{if(_st){clearTimeout(_st);_st=null}
   if(!_ok)return;
-  if(S.idb){try{localStorage.setItem('saba2',_lite())}catch(e){toast('Storage is full — your latest changes were not saved')}idbPut(S.people,S.sent).then(ok=>{if(!ok)toast('Could not save the list — try again')})}
-  else{let full=true;try{localStorage.setItem('saba2',JSON.stringify(S))}catch(e){full=false}
-    idbPut(S.people,S.sent).then(ok=>{if(ok){S.idb=1;try{localStorage.setItem('saba2',_lite())}catch(e){}}else if(!full)toast('Storage is full — your latest changes were not saved')})}};
+  const lvl=S.idb||0;let lsOK=true;
+  try{localStorage.setItem('saba2',lvl?_lite(lvl):JSON.stringify(S))}catch(e){lsOK=false}
+  const o={};_BIG.forEach(k=>o[k]=S[k]);
+  idbPut(o).then(ok=>{if(ok){if(lvl<2){S.idb=2;try{localStorage.setItem('saba2',_lite(2))}catch(e){toast('Could not save settings')}}}else toast('Could not save your data — try again')});
+  if(!lsOK&&lvl>=2)toast('Could not save settings — try again')};
 const save=()=>{if(_st)clearTimeout(_st);_st=setTimeout(_flush,300)};
 addEventListener('pagehide',_flush);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_flush()});
-const _boot=S.idb?idbGet().then(r=>{if(r){S.people=r.people||[];S.sent=r.sent||[]}else{_ok=false;toast('Could not load your saved lists',6000)}}):Promise.resolve();
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+const _boot=S.idb?idbGet().then(r=>{if(r){_BIG.forEach(k=>{if(r[k]!==undefined)S[k]=r[k]})}else{_ok=false;toast('Could not load your saved data',6000)}}):Promise.resolve();
 let _ss=null,_sr=null,_sl=-1;const sentSet=()=>{if(_sr!==S.sent||_sl!==S.sent.length){_ss=new Set(S.sent);_sr=S.sent;_sl=S.sent.length}return _ss};
 const toast=(m,ms)=>{const t=document.getElementById('toast');t.textContent=m;t.className='show';clearTimeout(toast.t);toast.t=setTimeout(()=>t.className='',ms||2200)};
 const log=m=>{S.log.unshift({t:Date.now(),m});S.log=S.log.slice(0,200)};
