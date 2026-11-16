@@ -18,3 +18,13 @@ Everything is stored in the browser and shared by all pages (localStorage, key `
 
 ## Sending
 There is no server. "Open mail" opens Gmail (app, Gmail Go or browser) with the message filled in, and you press send yourself, then tap "Mark sent".
+
+## Passcode
+`gate.js` (loaded first on every page) hides the app until the passcode is entered. The device stays unlocked until the passcode is changed or "Lock" is tapped.
+Current passcode: `OLABSTECH` (case-sensitive).
+
+To change it, put the SHA-256 of the new passcode in `HASH` at the top of `gate.js`:
+
+    printf '%s' 'NewPasscode' | sha256sum        # Linux/macOS (shasum -a 256 on Mac)
+
+Changing the hash locks everyone out again until they enter the new passcode.
